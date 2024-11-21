@@ -1,0 +1,220 @@
+import java.util.*;
+
+public class Ahorcado {
+    protected List<String> jugadores;
+    protected HashMap<String, Integer> puntajes= new HashMap<>();
+    protected String frase;
+    protected String fraseActual;
+    protected HashSet<Character> letrasAdivinadas;
+    protected HashSet<Character> letrasEnFrase;
+    protected int puntosMaximos;
+    protected Scanner scanner;
+
+    public List<String> frasesPredefinidas = Arrays.asList(
+            "Por fin es viernes",
+            "Es mejor tarde que nunca",
+            "Siempre se puede lograr mas",
+            "Apoya a tus seres queridos",
+            "Todo a su tiempo un paso a la vez");
+
+    public String jugadorSiguiente;
+
+    public Ahorcado(int puntosMaximos) {
+        this.jugadores = new ArrayList<>();
+        this.puntajes = new HashMap<>();
+        this.letrasAdivinadas = new HashSet<>();
+        letrasEnFrase = new HashSet<>();
+        this.puntosMaximos = puntosMaximos;
+        this.scanner = new Scanner(System.in);
+        this.jugadorSiguiente = null;
+    }
+    public Ahorcado() {
+        // Inicializar los atributos necesarios
+        System.out.println("Constructor sin parámetros de Ahorcado");
+    }
+
+    public void iniciarJuego() {
+        // Configuración de jugadores
+        System.out.println("Ingrese la cantidad de jugadores:");
+        int numJugadores = scanner.nextInt();
+        scanner.nextLine();
+
+        if (numJugadores < 2 || numJugadores > 4) {
+            System.out.println("Número de jugadores inválido. El juego admite entre 2 y 4 jugadores.");
+            return;
+        }
+
+        for (int i = 1; i <= numJugadores; i++) {
+            System.out.println("Ingrese el nombre del jugador " + i + ":");
+            String nombre = scanner.nextLine();
+            jugadores.add(nombre);
+            puntajes.put(nombre, 0);
+        }
+
+        while (!juegoTerminado()) {
+            iniciarRonda();
+        }
+
+        String ganador = obtenerGanador();
+        System.out.println("¡El juego ha terminado! El ganador es: " + ganador + " con " + puntajes.get(ganador) + " puntos.");
+    }
+    protected List<String> getJugadores() {
+        return jugadores;
+    }
+
+    protected Map<String, Integer> getPuntajes() {
+        return puntajes;
+    }
+    public void inicializarFrase(String frase) {
+        this.fraseActual = frase.toLowerCase();
+        letrasEnFrase.clear();  // Limpiamos las letras anteriores
+
+        for (char c : frase.toCharArray()) {
+            if (c != ' ') {  // Evitar agregar espacios
+                letrasEnFrase.add(c);  // Agregar solo letras
+            }
+        }
+    }
+
+    public void iniciarRonda() {
+        System.out.println("Iniciando nueva ronda...");
+        letrasAdivinadas.clear();
+
+        frase = frasesPredefinidas.get(new Random().nextInt(frasesPredefinidas.size())).toLowerCase();
+
+
+        HashSet<Character> letrasEnFrase = new HashSet<>();
+        for (char c : frase.toCharArray()) {
+            if (Character.isLetter(c)) {
+                letrasEnFrase.add(c);
+            }
+        }
+
+        mostrarFraseOculta();
+
+        boolean fraseAdivinada = false;
+        int indiceJugador = jugadorSiguiente == null ? 0 : jugadores.indexOf(jugadorSiguiente); // Empezar con el jugador que adivinó la última frase
+
+        while (!fraseAdivinada) {
+            for (int i = 0; i < jugadores.size(); i++) {
+                String jugador = jugadores.get(indiceJugador);
+                fraseAdivinada = turnoJugador(jugador, letrasEnFrase);
+
+                if (fraseAdivinada) {
+                    puntajes.put(jugador, puntajes.get(jugador) + 5);
+                    System.out.println("¡" + jugador + " ha adivinado la frase suma 5 puntos y gana esta ronda!");
+                    jugadorSiguiente = jugador;
+                    break;
+                }
+                indiceJugador = (indiceJugador + 1) % jugadores.size();
+            }
+        }
+    }
+
+    public boolean turnoJugador(String jugador, HashSet<Character> letrasEnFrase) {
+        System.out.println("\nTurno de " + jugador + ". Puntos actuales: " + puntajes.get(jugador));
+        boolean adivinando = true;
+
+        while (adivinando) {
+            System.out.println("Introduce una letra:");
+            char letra = scanner.nextLine().toLowerCase().charAt(0);
+
+            if (letrasAdivinadas.contains(letra)) {
+                System.out.println("Letra ya ingresada. -3 puntos.");
+                puntajes.put(jugador, puntajes.get(jugador) - 3);
+                adivinando = false;
+            } else if (letrasEnFrase.contains(letra)) {
+                int ocurrencias = contarOcurrencias(frase, letra);
+                int puntosGanados = 3 * ocurrencias;
+                puntajes.put(jugador, puntajes.get(jugador) + puntosGanados);
+                letrasAdivinadas.add(letra);
+                System.out.println("¡Letra encontrada! +" + puntosGanados + " puntos.");
+                mostrarFraseOculta();
+            } else {
+                System.out.println("Letra no encontrada. -1 punto.");
+                puntajes.put(jugador, puntajes.get(jugador) - 1);
+                adivinando = false;
+            }
+
+            System.out.println("Puntos de " + jugador + ": " + puntajes.get(jugador));
+
+            if (fraseCompletaAdivinada(letrasEnFrase)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    protected void mostrarFraseOculta() {
+        StringBuilder fraseOculta = new StringBuilder();
+        for (char c : frase.toCharArray()) {
+            if (letrasAdivinadas.contains(c) || !Character.isLetter(c)) {
+                fraseOculta.append(c);
+            } else {
+                fraseOculta.append("_");
+            }
+            fraseOculta.append(" ");
+        }
+        System.out.println("Frase actual: " + fraseOculta.toString().trim());
+    }
+    public void actualizarPuntos() {
+        // Aquí puedes implementar la lógica de actualización de puntos
+        // Por ejemplo, actualizar los puntos de los jugadores basados en su rendimiento
+        for (String jugador : puntajes.keySet()) {
+            System.out.println(jugador + " tiene " + puntajes.get(jugador) + " puntos.");
+        }
+    }
+
+    public int contarOcurrencias(String frase, char letra) {
+        int contador = 0;
+        for (char c : frase.toCharArray()) {
+            if (c == letra) {
+                contador++;
+            }
+        }
+        return contador;
+    }
+    protected HashSet<Character> obtenerLetrasEnFrase() {
+        return letrasEnFrase;
+    }
+    protected boolean fraseCompletaAdivinada(HashSet<Character> letrasEnFrase) {
+        for (char c : letrasEnFrase) {
+            if (!letrasAdivinadas.contains(c)) {
+                return false;
+            }
+        }
+        return true;
+    }
+    public void setPuntosMaximos(int puntosMaximos) {
+        this.puntosMaximos = puntosMaximos;
+    }
+
+    public boolean juegoTerminado() {
+        for (int puntos : puntajes.values()) {
+            if (puntos >= puntosMaximos) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public String obtenerGanador() {
+        String ganador = jugadores.get(0);
+        for (String jugador : jugadores) {
+            if (puntajes.get(jugador) > puntajes.get(ganador)) {
+                ganador = jugador;
+            }
+        }
+        return ganador;
+    }
+
+    public static void main(String[] args) {
+        Scanner scanner = new Scanner(System.in);
+        System.out.println("Bienvenido al juego de Ahorcado. Introduce la cantidad de puntos para ganar:");
+        int puntosMaximos = scanner.nextInt();
+        scanner.nextLine();
+
+        Ahorcado juego = new Ahorcado(puntosMaximos);
+        juego.iniciarJuego();
+    }
+}
