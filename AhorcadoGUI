@@ -1,0 +1,279 @@
+import javax.swing.*;
+import java.awt.*;
+import java.util.*;
+
+public class AhorcadoGUI extends Ahorcado {
+    private JFrame frame;
+    private JTextArea displayArea;
+    private JLabel puntosLabel, turnoLabel;
+    private int indiceJugador;
+    private String fraseActual;
+    private boolean juegoEnCurso;
+
+    private JButton iniciarJuegoButton;
+
+    public AhorcadoGUI() {
+        super(obtenerPuntosMaximos());
+        SwingUtilities.invokeLater(this::setupGUI);
+    }
+
+    private static int obtenerPuntosMaximos() {
+        while (true) {
+            String entrada = JOptionPane.showInputDialog(null, "Bienvenido al juego de Ahorcado.\nIntroduce la cantidad de puntos para ganar:");
+            if (entrada == null) {
+                JOptionPane.showMessageDialog(null, "Juego cancelado.");
+                System.exit(0);
+            }
+            try {
+                int puntos = Integer.parseInt(entrada);
+                if (puntos > 0) {
+                    return puntos;
+                } else {
+                    JOptionPane.showMessageDialog(null, "Introduce un número positivo.");
+                }
+            } catch (NumberFormatException e) {
+                JOptionPane.showMessageDialog(null, "Entrada inválida. Introduce un número válido.");
+            }
+        }
+    }
+
+    private void setupGUI() {
+        frame = new JFrame("Juego de Ahorcado");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(600, 600);
+        frame.setLayout(new BorderLayout());
+
+        // Área de texto para mostrar la frase y los mensajes
+        displayArea = new JTextArea();
+        displayArea.setEditable(false);
+        displayArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
+        JScrollPane scrollPane = new JScrollPane(displayArea);
+        frame.add(scrollPane, BorderLayout.CENTER);
+
+        // Panel de información
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new GridLayout(1, 2));
+
+        puntosLabel = new JLabel("Puntos: ");
+        puntosLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        turnoLabel = new JLabel("Turno: ");
+        turnoLabel.setFont(new Font("Arial", Font.BOLD, 14));
+
+        infoPanel.add(puntosLabel);
+        infoPanel.add(turnoLabel);
+        frame.add(infoPanel, BorderLayout.NORTH);
+
+        // Panel de botones
+        JPanel botonesPanel = new JPanel();
+        botonesPanel.setLayout(new GridLayout(3, 10, 5, 5));
+        agregarBotones(botonesPanel, "qwertyuiop");
+        agregarBotones(botonesPanel, "asdfghjklñ");
+        agregarBotones(botonesPanel, "zxcvbnm");
+        frame.add(botonesPanel, BorderLayout.SOUTH);
+
+        // Botón para iniciar el juego
+        iniciarJuegoButton = new JButton("Iniciar Juego");
+        iniciarJuegoButton.addActionListener(e -> iniciarJuegoGUI());
+        frame.add(iniciarJuegoButton, BorderLayout.WEST);
+
+        // Mostrar la ventana
+        frame.setVisible(true);
+    }
+
+    private void iniciarJuegoGUI() {
+        // Desactivar el botón de iniciar después de que el juego comienza
+        iniciarJuegoButton.setEnabled(false);
+
+        // Comenzamos el juego
+        SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
+            @Override
+            protected Void doInBackground() throws Exception {
+                configurarJugadores();
+                return null;
+            }
+        };
+        worker.execute();
+    }
+
+    private void configurarJugadores() {
+        int numJugadores = 0;
+        while (numJugadores < 2 || numJugadores > 4) {
+            try {
+                String entrada = JOptionPane.showInputDialog(frame, "Ingrese la cantidad de jugadores (2-4):");
+                if (entrada == null) {
+                    mostrarMensaje("Juego cancelado.");
+                    System.exit(0);
+                }
+                numJugadores = Integer.parseInt(entrada);
+                if (numJugadores < 2 || numJugadores > 4) {
+                    mostrarMensaje("Número de jugadores inválido. Intente de nuevo.");
+                }
+            } catch (NumberFormatException e) {
+                mostrarMensaje("Entrada inválida. Ingrese un número entre 2 y 4.");
+            }
+        }
+
+        for (int i = 1; i <= numJugadores; i++) {
+            String nombre = null;
+            while (nombre == null || nombre.isEmpty()) {
+                nombre = JOptionPane.showInputDialog(frame, "Ingrese el nombre del jugador " + i + ":");
+                if (nombre == null) {
+                    mostrarMensaje("Juego cancelado.");
+                    System.exit(0);
+                }
+                if (nombre.isEmpty()) {
+                    mostrarMensaje("El nombre no puede estar vacío. Intente de nuevo.");
+                }
+            }
+            jugadores.add(nombre);
+            puntajes.put(nombre, 0);
+        }
+
+        mostrarMensaje("¡Bienvenido al juego de Ahorcado!");
+        mostrarMensaje("Presiona una letra para comenzar el juego.");
+        iniciarRonda();
+    }
+
+    @Override
+    public void iniciarJuego() {
+        super.iniciarJuego();
+        iniciarRonda();
+    }
+
+    public void iniciarRonda() {
+        letrasAdivinadas.clear();
+
+        // Selecciona una nueva frase y la inicializa en Ahorcado
+        fraseActual = frasesPredefinidas.get(new java.util.Random().nextInt(frasesPredefinidas.size())).toLowerCase();
+        inicializarFrase(fraseActual); // Asegúrate de llamar al método de Ahorcado
+
+        mostrarFraseOculta();
+
+        juegoEnCurso = true;
+        mostrarMensaje("Iniciando nueva ronda...");
+    }
+    public boolean fraseCompletaAdivinada() {
+        for (char c : letrasEnFrase) {
+            if (!letrasAdivinadas.contains(c)) {
+                return false; // Si alguna letra no ha sido adivinada, la frase no está completa
+            }
+        }
+        return true; // Si todas las letras han sido adivinadas
+    }
+
+    public void procesarLetraSeleccionada(char letra, JButton boton) {
+        SwingUtilities.invokeLater(() -> {
+            if (!juegoEnCurso) {
+                mostrarMensaje("El juego no está en curso. Presiona 'Iniciar Juego' para comenzar.");
+                return;
+            }
+
+            String jugadorActual = jugadores.get(indiceJugador);
+
+            if (letrasAdivinadas.contains(letra)) {
+                // Si la letra ya fue adivinada, restamos puntos
+                mostrarMensaje("Letra ya adivinada. -3 puntos.");
+                puntajes.put(jugadorActual, puntajes.get(jugadorActual) - 3);
+                indiceJugador = (indiceJugador + 1) % jugadores.size();
+            } else if (fraseActual.contains(String.valueOf(letra))) {
+                // Si la letra está en la frase, la añadimos a las letras adivinadas
+                letrasAdivinadas.add(letra);
+                mostrarMensaje("¡Letra encontrada! +" + (3 * contarOcurrencias(fraseActual, letra)) + " puntos.");
+                puntajes.put(jugadorActual, puntajes.get(jugadorActual) + 3 * contarOcurrencias(fraseActual, letra));
+                mostrarFraseOculta();
+
+                if (fraseCompletaAdivinada()) {
+                    mostrarMensaje("¡" + jugadorActual + " ha adivinado la frase!");
+                    puntajes.put(jugadorActual, puntajes.get(jugadorActual) + 5); // 5 puntos por adivinar la frase
+
+                    // Verificar si el jugador ha alcanzado los puntos máximos
+                    verificarVictoria(jugadorActual);
+
+                    // Iniciar una nueva ronda sin cambiar el turno del jugador
+                    if (juegoEnCurso) {
+                        iniciarRonda();
+                    }
+                    return;
+                }
+
+                // El jugador sigue teniendo el turno
+            } else {
+                // Si la letra no está en la frase, se restan puntos
+                mostrarMensaje("Letra incorrecta. -1 punto.");
+                puntajes.put(jugadorActual, puntajes.get(jugadorActual) - 1);
+
+                // Cambio al siguiente jugador solo si se equivocó
+                indiceJugador = (indiceJugador + 1) % jugadores.size();
+            }
+
+            // Actualizar los puntajes y el turno en la GUI
+            actualizarPuntajesGUI();
+        });
+    }
+
+    private void desactivarBotones() {
+        for (Component componente : frame.getContentPane().getComponents()) {
+            if (componente instanceof JPanel) {
+                JPanel panel = (JPanel) componente;
+                for (Component boton : panel.getComponents()) {
+                    if (boton instanceof JButton) {
+                        boton.setEnabled(false);
+                    }
+                }
+            }
+        }
+    }
+    private void verificarVictoria(String jugadorActual) {
+        // Verificar si el jugador ha alcanzado los puntos máximos **después de adivinar la frase**
+        if (puntajes.get(jugadorActual) >= puntosMaximos) {
+            mostrarMensaje("¡" + jugadorActual + " ha ganado el juego con " + puntajes.get(jugadorActual) + " puntos!");
+            // Desactivar la interfaz del juego y terminar el juego
+            desactivarBotones();
+            juegoEnCurso = false;
+        }
+    }
+
+    private void mostrarMensaje(String mensaje) {
+        displayArea.append(mensaje + "\n");
+    }
+
+    public void actualizarPuntajesGUI() {
+        StringBuilder puntajesTexto = new StringBuilder("Puntos:\n");
+        for (Map.Entry<String, Integer> entry : puntajes.entrySet()) {
+            puntajesTexto.append(entry.getKey())
+                    .append(": ")
+                    .append(entry.getValue())
+                    .append(" ");
+        }
+        puntosLabel.setText(puntajesTexto.toString());
+        turnoLabel.setText("Turno: " + jugadores.get(indiceJugador));
+    }
+
+
+    @Override
+    public void mostrarFraseOculta() {
+        StringBuilder fraseOculta = new StringBuilder();
+        for (char c : fraseActual.toCharArray()) {
+            if (letrasAdivinadas.contains(c)) {
+                fraseOculta.append(c).append(" ");
+            } else if (c == ' ') {
+                fraseOculta.append("  ");
+            } else {
+                fraseOculta.append("_ ");
+            }
+        }
+        displayArea.setText(fraseOculta.toString()); // Actualizar el área de texto con la frase oculta
+    }
+
+    private void agregarBotones(JPanel panel, String letras) {
+        for (char letra : letras.toCharArray()) {
+            JButton boton = new JButton(String.valueOf(letra));
+            boton.addActionListener(e -> procesarLetraSeleccionada(letra, boton));
+            panel.add(boton);
+        }
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(AhorcadoGUI::new);
+    }
+}
