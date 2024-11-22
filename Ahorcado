@@ -29,12 +29,10 @@ public class Ahorcado {
         this.jugadorSiguiente = null;
     }
     public Ahorcado() {
-        // Inicializar los atributos necesarios
         System.out.println("Constructor sin parámetros de Ahorcado");
     }
 
     public void iniciarJuego() {
-        // Configuración de jugadores
         System.out.println("Ingrese la cantidad de jugadores:");
         int numJugadores = scanner.nextInt();
         scanner.nextLine();
@@ -67,11 +65,11 @@ public class Ahorcado {
     }
     public void inicializarFrase(String frase) {
         this.fraseActual = frase.toLowerCase();
-        letrasEnFrase.clear();  // Limpiamos las letras anteriores
+        letrasEnFrase.clear();
 
         for (char c : frase.toCharArray()) {
-            if (c != ' ') {  // Evitar agregar espacios
-                letrasEnFrase.add(c);  // Agregar solo letras
+            if (c != ' ') {
+                letrasEnFrase.add(c);
             }
         }
     }
@@ -93,7 +91,7 @@ public class Ahorcado {
         mostrarFraseOculta();
 
         boolean fraseAdivinada = false;
-        int indiceJugador = jugadorSiguiente == null ? 0 : jugadores.indexOf(jugadorSiguiente); // Empezar con el jugador que adivinó la última frase
+        int indiceJugador = jugadorSiguiente == null ? 0 : jugadores.indexOf(jugadorSiguiente);
 
         while (!fraseAdivinada) {
             for (int i = 0; i < jugadores.size(); i++) {
@@ -158,8 +156,6 @@ public class Ahorcado {
         System.out.println("Frase actual: " + fraseOculta.toString().trim());
     }
     public void actualizarPuntos() {
-        // Aquí puedes implementar la lógica de actualización de puntos
-        // Por ejemplo, actualizar los puntos de los jugadores basados en su rendimiento
         for (String jugador : puntajes.keySet()) {
             System.out.println(jugador + " tiene " + puntajes.get(jugador) + " puntos.");
         }
