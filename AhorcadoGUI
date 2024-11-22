@@ -43,14 +43,12 @@ public class AhorcadoGUI extends Ahorcado {
         frame.setSize(600, 600);
         frame.setLayout(new BorderLayout());
 
-        // Área de texto para mostrar la frase y los mensajes
         displayArea = new JTextArea();
         displayArea.setEditable(false);
         displayArea.setFont(new Font("Monospaced", Font.PLAIN, 16));
         JScrollPane scrollPane = new JScrollPane(displayArea);
         frame.add(scrollPane, BorderLayout.CENTER);
 
-        // Panel de información
         JPanel infoPanel = new JPanel();
         infoPanel.setLayout(new GridLayout(1, 2));
 
@@ -63,7 +61,6 @@ public class AhorcadoGUI extends Ahorcado {
         infoPanel.add(turnoLabel);
         frame.add(infoPanel, BorderLayout.NORTH);
 
-        // Panel de botones
         JPanel botonesPanel = new JPanel();
         botonesPanel.setLayout(new GridLayout(3, 10, 5, 5));
         agregarBotones(botonesPanel, "qwertyuiop");
@@ -71,20 +68,16 @@ public class AhorcadoGUI extends Ahorcado {
         agregarBotones(botonesPanel, "zxcvbnm");
         frame.add(botonesPanel, BorderLayout.SOUTH);
 
-        // Botón para iniciar el juego
         iniciarJuegoButton = new JButton("Iniciar Juego");
         iniciarJuegoButton.addActionListener(e -> iniciarJuegoGUI());
         frame.add(iniciarJuegoButton, BorderLayout.WEST);
 
-        // Mostrar la ventana
         frame.setVisible(true);
     }
 
     private void iniciarJuegoGUI() {
-        // Desactivar el botón de iniciar después de que el juego comienza
         iniciarJuegoButton.setEnabled(false);
 
-        // Comenzamos el juego
         SwingWorker<Void, Void> worker = new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
@@ -143,9 +136,8 @@ public class AhorcadoGUI extends Ahorcado {
     public void iniciarRonda() {
         letrasAdivinadas.clear();
 
-        // Selecciona una nueva frase y la inicializa en Ahorcado
         fraseActual = frasesPredefinidas.get(new java.util.Random().nextInt(frasesPredefinidas.size())).toLowerCase();
-        inicializarFrase(fraseActual); // Asegúrate de llamar al método de Ahorcado
+        inicializarFrase(fraseActual);
 
         mostrarFraseOculta();
 
@@ -155,10 +147,10 @@ public class AhorcadoGUI extends Ahorcado {
     public boolean fraseCompletaAdivinada() {
         for (char c : letrasEnFrase) {
             if (!letrasAdivinadas.contains(c)) {
-                return false; // Si alguna letra no ha sido adivinada, la frase no está completa
+                return false;
             }
         }
-        return true; // Si todas las letras han sido adivinadas
+        return true;
     }
 
     public void procesarLetraSeleccionada(char letra, JButton boton) {
@@ -171,12 +163,10 @@ public class AhorcadoGUI extends Ahorcado {
             String jugadorActual = jugadores.get(indiceJugador);
 
             if (letrasAdivinadas.contains(letra)) {
-                // Si la letra ya fue adivinada, restamos puntos
                 mostrarMensaje("Letra ya adivinada. -3 puntos.");
                 puntajes.put(jugadorActual, puntajes.get(jugadorActual) - 3);
                 indiceJugador = (indiceJugador + 1) % jugadores.size();
             } else if (fraseActual.contains(String.valueOf(letra))) {
-                // Si la letra está en la frase, la añadimos a las letras adivinadas
                 letrasAdivinadas.add(letra);
                 mostrarMensaje("¡Letra encontrada! +" + (3 * contarOcurrencias(fraseActual, letra)) + " puntos.");
                 puntajes.put(jugadorActual, puntajes.get(jugadorActual) + 3 * contarOcurrencias(fraseActual, letra));
@@ -184,29 +174,23 @@ public class AhorcadoGUI extends Ahorcado {
 
                 if (fraseCompletaAdivinada()) {
                     mostrarMensaje("¡" + jugadorActual + " ha adivinado la frase!");
-                    puntajes.put(jugadorActual, puntajes.get(jugadorActual) + 5); // 5 puntos por adivinar la frase
+                    puntajes.put(jugadorActual, puntajes.get(jugadorActual) + 5);
 
-                    // Verificar si el jugador ha alcanzado los puntos máximos
                     verificarVictoria(jugadorActual);
 
-                    // Iniciar una nueva ronda sin cambiar el turno del jugador
                     if (juegoEnCurso) {
                         iniciarRonda();
                     }
                     return;
                 }
 
-                // El jugador sigue teniendo el turno
             } else {
-                // Si la letra no está en la frase, se restan puntos
                 mostrarMensaje("Letra incorrecta. -1 punto.");
                 puntajes.put(jugadorActual, puntajes.get(jugadorActual) - 1);
 
-                // Cambio al siguiente jugador solo si se equivocó
                 indiceJugador = (indiceJugador + 1) % jugadores.size();
             }
 
-            // Actualizar los puntajes y el turno en la GUI
             actualizarPuntajesGUI();
         });
     }
@@ -224,10 +208,8 @@ public class AhorcadoGUI extends Ahorcado {
         }
     }
     private void verificarVictoria(String jugadorActual) {
-        // Verificar si el jugador ha alcanzado los puntos máximos **después de adivinar la frase**
         if (puntajes.get(jugadorActual) >= puntosMaximos) {
             mostrarMensaje("¡" + jugadorActual + " ha ganado el juego con " + puntajes.get(jugadorActual) + " puntos!");
-            // Desactivar la interfaz del juego y terminar el juego
             desactivarBotones();
             juegoEnCurso = false;
         }
@@ -262,7 +244,7 @@ public class AhorcadoGUI extends Ahorcado {
                 fraseOculta.append("_ ");
             }
         }
-        displayArea.setText(fraseOculta.toString()); // Actualizar el área de texto con la frase oculta
+        displayArea.setText(fraseOculta.toString());
     }
 
     private void agregarBotones(JPanel panel, String letras) {
